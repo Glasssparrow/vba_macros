@@ -1,0 +1,246 @@
+
+Function POSITION_IN_ALPHABET(letter)
+    Dim Alphabet As String
+    Alphabet = "A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z"
+    Dim arr() As String
+    arr = Split(Alphabet, ",")
+    Dim position As Integer
+    position = 0
+    Dim n As Integer
+    For n = 0 To 25
+        If StrComp(letter, arr(n)) = 0 Then
+            position = n
+        End If
+    Next n
+    POSITION_IN_ALPHABET = position + 1
+End Function
+
+Function GET_CELL(target_letter, start_letter)
+    Dim start_column As Integer
+    Dim end_column As Integer
+    start_column = POSITION_IN_ALPHABET(start_letter)
+    end_column = POSITION_IN_ALPHABET(target_letter)
+    
+    GET_CELL = "R[0]C[" & (end_column - start_column) & "]"
+End Function
+
+
+Sub нагрузки()
+'
+' нагрузки Макрос
+'
+'
+    Dim working As Boolean
+    Dim height As Integer
+    Dim formula As String
+    Dim length_counter As Integer
+    ' Метки
+    Dim mark_column As String
+    Dim start_mark As String
+    Dim end_mark As String
+    mark_column = "V"
+    start_mark = "+"
+    end_mark = "="
+    reserve_mark = "Да"
+    ' Столбцы таблицы
+    Dim U_nom As String
+    Dim reserve As String
+    Dim quantity As String
+    Dim Solo_P As String
+    Dim P_sum As String
+    Dim Ku As String
+    Dim cos_fi As String
+    Dim tg_fi As String
+    Dim Ku_P As String
+    Dim Ku_P_tg As String
+    Dim n_P2 As String
+    Dim n_effective As String
+    Dim Kp As String
+    Dim P_result As String
+    Dim Q_result As String
+    Dim S_result As String
+    Dim I_result As String
+    
+    U_nom = "C"
+    reserve = "D"
+    quantity = "E"
+    Solo_P = "F"
+    P_sum = "G"
+    Ku = "H"
+    cos_fi = "I"
+    tg_fi = "J"
+    Ku_P = "K"
+    Ku_P_tg = "L"
+    n_P2 = "M"
+    n_effective = "N"
+    Kp = "O"
+    P_result = "P"
+    Q_result = "Q"
+    S_result = "R"
+    I_result = "S"
+    
+    ' Предполагаем напряжение щита если оно не указано
+    Dim U_assumed As Integer
+    U_assumed = 380
+    
+    working = False
+    height = Cells(Rows.Count, "A").End(xlUp).Row
+    length_counter = 0
+    
+    Dim I As Integer
+    For I = 5 To height
+        ' Итоги
+        If working And Range(mark_column & I).Value = end_mark Then
+            formula = "="
+            ' Сумма всего кроме резерва
+            ' Формируем формулу (будет одинаковой для множества ячеек)
+            For n = 1 To length_counter
+                Range(reserve & (I - n)).Select
+                If ActiveCell.Value <> reserve_mark Then
+                    formula = formula & "+ R[" & -n & "]C[0]"
+                End If
+            Next n
+            ' Суммируем данные таблицы
+            Range(quantity & I).FormulaR1C1 = formula
+            Range(Solo_P & I).FormulaR1C1 = formula
+            Range(P_sum & I).FormulaR1C1 = formula
+            Range(Ku_P & I).FormulaR1C1 = formula
+            Range(Ku_P_tg & I).FormulaR1C1 = formula
+            Range(n_P2 & I).FormulaR1C1 = formula
+            Range(P_result & I).FormulaR1C1 = formula
+            Range(Q_result & I).FormulaR1C1 = formula
+            ' S = (P^2+Q^2)^0.5
+            Range(S_result & I).FormulaR1C1 = "=SQRT(" & _
+                GET_CELL(P_result, S_result) & "^2" _
+                & "+" & _
+                GET_CELL(Q_result, S_result) & "^2)"
+            
+            ' Ки = (Ки*Рн)/Рн
+            Range(Ku & I).FormulaR1C1 = "=" & _
+                GET_CELL(Ku_P, Ku) & _
+                "/" & _
+                GET_CELL(P_sum, Ku)
+            Range(cos_fi & I).FormulaR1C1 = "=" & _
+                GET_CELL(P_result, cos_fi) _
+                & "/" & _
+                GET_CELL(S_result, cos_fi)
+            ' tg = sin/cos = корень(1-cos2)/cos
+            Range(tg_fi & I).FormulaR1C1 = "=SQRT(1-" & _
+                GET_CELL(cos_fi, tg_fi) & "^2)" _
+                & "/" & _
+                GET_CELL(cos_fi, tg_fi)
+            ' n_эф = Рн^2/(n * Pпотр^2)
+            Range(n_effective & I).FormulaR1C1 = "=" & _
+                GET_CELL(P_sum, n_effective) & "^2" _
+                & "/" & _
+                GET_CELL(n_P2, n_effective)
+            ' если 220/230: I = 1000*Рн / (Uн * cos_fi)
+            ' если 380/400: I = 1000*Рн / (1.73 * Uн * cos_fi)
+            Range(U_nom & I).Select
+            If ActiveCell.Value = 380 Or ActiveCell.Value = 400 Then
+                Range(I_result & I).FormulaR1C1 = "=" & _
+                    "1000*" & GET_CELL(P_result, I_result) _
+                    & "/(SQRT(3)*" & _
+                    GET_CELL(U_nom, I_result) _
+                    & "*" & _
+                    GET_CELL(cos_fi, I_result) & ")"
+            Else
+                Range(I_result & I).FormulaR1C1 = "=" & _
+                    "1000*" & GET_CELL(P_result, I_result) _
+                    & "/(SQRT(3)*" & _
+                    U_assumed _
+                    & "*" & _
+                    GET_CELL(cos_fi, I_result) & ")"
+            End If
+            ' Kp = P / Pи
+            Range(Kp & I).FormulaR1C1 = "=" & _
+                    GET_CELL(P_result, Kp) _
+                    & "/" & _
+                    GET_CELL(Ku_P, Kp)
+            
+            working = False
+            length_counter = 0
+        End If
+        ' Поиск метки старта
+        If Range(mark_column & I).Value = start_mark Then
+            working = True
+        End If
+        ' Основная часть
+        If working Then
+            length_counter = length_counter + 1
+            ' Рн = Рпотр * n
+            Range(P_sum & I).FormulaR1C1 = "=" & _
+                GET_CELL(quantity, P_sum) _
+                & "*" & _
+                GET_CELL(Solo_P, P_sum)
+            ' tg = sin/cos = корень(1-cos2)/cos
+            Range(tg_fi & I).FormulaR1C1 = "=SQRT(1-" & _
+                GET_CELL(cos_fi, tg_fi) & "^2)" _
+                & "/" & _
+                GET_CELL(cos_fi, tg_fi)
+            ' Ки * Рн
+            Range(Ku_P & I).FormulaR1C1 = "=" & _
+                GET_CELL(P_sum, Ku_P) _
+                & "*" & _
+                GET_CELL(Ku, Ku_P)
+            ' Ки*Рн * tg
+            Range(Ku_P_tg & I).FormulaR1C1 = "=" & _
+                GET_CELL(Ku_P, Ku_P_tg) _
+                & "*" & _
+                GET_CELL(tg_fi, Ku_P_tg)
+            ' n * Рн^2
+            Range(n_P2 & I).FormulaR1C1 = "=" & _
+                GET_CELL(quantity, n_P2) _
+                & "*" & _
+                GET_CELL(Solo_P, n_P2) & "^2"
+            ' n_эф = Рн^2/(n * Pпотр^2)
+            Range(n_effective & I).FormulaR1C1 = "=" & _
+                GET_CELL(P_sum, n_effective) & "^2" _
+                & "/(" & _
+                GET_CELL(quantity, n_effective) _
+                & "*" & _
+                GET_CELL(Solo_P, n_effective) & "^2)"
+            ' P = Ки*Рн * Кp
+            Range(P_result & I).FormulaR1C1 = "=" & _
+                GET_CELL(Ku_P, P_result) _
+                & "*" & _
+                GET_CELL(Kp, P_result)
+            ' Q = Ки*Рн*tg * Kp
+            Range(Q_result & I).FormulaR1C1 = "=" & _
+                GET_CELL(Ku_P_tg, Q_result) _
+                & "*" & _
+                GET_CELL(Kp, Q_result)
+            ' S = (P^2+Q^2)^0.5
+            Range(S_result & I).FormulaR1C1 = "=SQRT(" & _
+                GET_CELL(P_result, S_result) & "^2" _
+                & "+" & _
+                GET_CELL(Q_result, S_result) & "^2)"
+            ' если 220/230: I = 1000*Рн / (Uн * cos_fi)
+            ' если 380/400: I = 1000*Рн / (1.73 * Uн * cos_fi)
+            Range(U_nom & I).Select
+            If ActiveCell.Value <> 220 And ActiveCell.Value <> 230 And ActiveCell.Value _
+                <> 380 And ActiveCell.Value <> 400 Then
+                MsgBox ActiveCell.Value & " - Некорректное значение напряжения (должно быть 220/230/380/400)"
+            End If
+            If ActiveCell.Value = 230 Or ActiveCell.Value = 400 Then
+                U_assumed = 400
+            End If
+            If ActiveCell.Value = 220 Or ActiveCell.Value = 230 Then
+                Range(I_result & I).FormulaR1C1 = "=" & _
+                    "1000*" & GET_CELL(P_sum, I_result) _
+                    & "/(" & _
+                    GET_CELL(U_nom, I_result) _
+                    & "*" & _
+                    GET_CELL(cos_fi, I_result) & ")"
+            End If
+            If ActiveCell.Value = 380 Or ActiveCell.Value = 400 Then
+                Range(I_result & I).FormulaR1C1 = "=" & _
+                    "1000*" & GET_CELL(P_result, I_result) _
+                    & "/(SQRT(3)*" & _
+                    GET_CELL(U_nom, I_result) _
+                    & "*" & _
+                    GET_CELL(cos_fi, I_result) & ")"
+            End If
+        End If
+    Next I
+End Sub
