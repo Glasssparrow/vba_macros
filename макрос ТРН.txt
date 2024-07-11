@@ -38,9 +38,9 @@ Sub нагрузки()
     Dim mark_column As String
     Dim start_mark As String
     Dim end_mark As String
-    mark_column = "V"
-    start_mark = "+"
-    end_mark = "="
+    mark_column = "W"
+    start_mark = "начало"
+    end_mark = "итог"
     reserve_mark = "Да"
     ' Столбцы таблицы
     Dim U_nom As String
