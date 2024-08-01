@@ -83,6 +83,10 @@ Sub нагрузки()
     Dim U_assumed As Integer
     U_assumed = 380
     
+    ' Получаем координаты выбранной ячейки, чтобы вернуть её выделение позже
+    Dim start_coord As String
+    start_coord = ActiveCell.Address
+    
     working = False
     height = Cells(Rows.Count, "A").End(xlUp).Row
     length_counter = 0
@@ -243,4 +247,5 @@ Sub нагрузки()
             End If
         End If
     Next I
+    Range(start_coord).Select
 End Sub
