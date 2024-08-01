@@ -111,6 +111,9 @@ Sub нагрузки()
                 Next allowed_mark
                 If ActiveCell.Value <> reserve_mark Then
                     formula = formula & "+ R[" & -n & "]C[0]"
+                    If Not IsEmpty(ActiveCell) Then
+                        MsgBox ("Не распознан идентификатор резерва " & ActiveCell.Value)
+                    End If
                 End If
             Next n
             ' Суммируем данные таблицы
