@@ -38,10 +38,14 @@ Sub нагрузки()
     Dim mark_column As String
     Dim start_mark As String
     Dim end_mark As String
+    Dim allowed_reserve_marks As Variant
+    Dim quantity_of_allowed_marks As Integer
     mark_column = "W"
     start_mark = "начало"
     end_mark = "итог"
     reserve_mark = "Да"
+    allowed_reserve_marks = Array("да", "Резерв", "резерв", "+")
+    quantity_of_allowed_marks = UBound(allowed_reserve_marks) - LBound(allowed_reserve_marks) + 1
     ' Столбцы таблицы
     Dim U_nom As String
     Dim reserve As String
@@ -100,6 +104,11 @@ Sub нагрузки()
             ' Формируем формулу (будет одинаковой для множества ячеек)
             For n = 1 To length_counter
                 Range(reserve & (I - n)).Select
+                For allowed_mark = 0 To (quantity_of_allowed_marks - 1)
+                    If ActiveCell.Value = allowed_reserve_marks(allowed_mark) Then
+                        ActiveCell.Value = reserve_mark
+                    End If
+                Next allowed_mark
                 If ActiveCell.Value <> reserve_mark Then
                     formula = formula & "+ R[" & -n & "]C[0]"
                 End If
