@@ -44,7 +44,7 @@ Sub нагрузки()
     start_mark = "начало"
     end_mark = "итог"
     reserve_mark = "Да"
-    allowed_reserve_marks = Array("ДА", "Да", "да", "дА", "Резерв", "резерв", "+")
+    allowed_reserve_marks = Array("ДА", "Да", "да", "дА", "Даа", "ад", "Ад", "аД", "АД")
     quantity_of_allowed_marks = UBound(allowed_reserve_marks) - LBound(allowed_reserve_marks) + 1
     ' Столбцы таблицы
     Dim U_nom As String
